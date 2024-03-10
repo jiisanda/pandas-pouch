@@ -1,0 +1,11 @@
+[package]
+name = "pandas-pouch"
+version = "0.1.0"
+edition = "2021"
+description = "A Distributed Caching Servie with Rust 🦀"
+license = "MIT"
+readme = "README.md"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
