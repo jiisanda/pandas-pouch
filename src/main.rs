@@ -1,3 +1,0 @@
-mod lru;
-
-fn main() { }
