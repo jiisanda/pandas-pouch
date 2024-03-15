@@ -35,8 +35,7 @@ impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
     }
 
     fn put(&mut self, key: K, value: V) {
-        // TODO: insert key-value into the cache, if already exists the update the value and position in DLL
-        // TODO: if cache is full, it will remove the least recently used item before inserting new item
+        // TODO: add tests
         let node = match self.map.get_mut(&key).unwrap() {
             Some(node) => {
                 node.borrow_mut().value = value.clone();
@@ -79,7 +78,6 @@ impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
     }
 
     fn move_to_head(&mut self, node_ref: Rc<RefCell<Node<K, V>>>) {
-        // TODO: remove the node from its current position, update the head/tail, insert the node at the front
         if let Some(prev_node_ref) = &node_ref.borrow().prev {
             prev_node_ref.borrow_mut().next = node_ref.borrow().next.clone();
         } else {
