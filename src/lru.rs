@@ -31,7 +31,6 @@ impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
     }
 
     pub fn get(&mut self, key: K) -> Option<V> {
-        // TODO: return the value if exists in cache, and update the position of the key in DLL
         match self.map.get(&key) {
             Some(node) => {
                 let value = node.clone().unwrap().borrow().value.clone();
@@ -43,7 +42,6 @@ impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
     }
 
     pub fn put(&mut self, key: K, value: V) {
-        // TODO: add tests
         let node = match self.map.get_mut(&key) {
             Some(Some(node)) => {
                 node.borrow_mut().value = value.clone();
