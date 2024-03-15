@@ -56,6 +56,20 @@ impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
                 }
 
                 self.head = Some(new_node.clone());
+
+                if self.map.len() > self.capacity {
+                    if let Some(tail) = &self.tail {
+                        let prev = tail.borrow().prev.clone();
+                        match prev {
+                            Some(ref prev) => prev.borrow_mut().next = None,
+                            None => self.head = None,
+                        }
+                        let key_to_remove = tail.borrow().key.clone();
+                        self.map.remove(&key_to_remove);
+                        self.tail = prev;
+                    }
+                }
+
                 self.map.insert(key.clone(), Some(new_node.clone()));
                 new_node
             }
