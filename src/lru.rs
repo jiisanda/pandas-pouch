@@ -78,7 +78,31 @@ impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
         self.move_to_head(node);
     }
 
-    fn move_to_head(&mut self, _node_ref: Rc<RefCell<Node<K, V>>>) {
+    fn move_to_head(&mut self, node_ref: Rc<RefCell<Node<K, V>>>) {
         // TODO: remove the node from its current position, update the head/tail, insert the node at the front
+        if let Some(prev_node_ref) = &node_ref.borrow().prev {
+            prev_node_ref.borrow_mut().next = node_ref.borrow().next.clone();
+        } else {
+            // node is head of LRUCache DLL, update the head
+            self.head = node_ref.borrow().next.clone();
+        }
+
+        if let Some(next_node_ref) = &node_ref.borrow().next {
+            next_node_ref.borrow_mut().prev = node_ref.borrow().prev.clone();
+        } else {
+            // node in tail, update tail
+            self.tail = node_ref.borrow().prev.clone();
+        }
+
+        // inserting at head
+        if let Some(head_ref) = &self.head {
+            head_ref.borrow_mut().prev = Some(node_ref.clone());
+            node_ref.borrow_mut().next = Some(head_ref.clone());
+        } else {
+            // DLL is empty, both head and tail to the node
+            self.tail = Some(node_ref.clone());
+        }
+
+        self.head = Some(node_ref);
     }
 }
