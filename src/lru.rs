@@ -44,10 +44,13 @@ impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
 
     pub fn put(&mut self, key: K, value: V) {
         // TODO: add tests
-        let node = match self.map.get_mut(&key).unwrap() {
-            Some(node) => {
+        let node = match self.map.get_mut(&key) {
+            Some(Some(node)) => {
                 node.borrow_mut().value = value.clone();
                 node.clone()
+            }
+            Some(None) => {
+                panic!("Logic error: Node is None for existing key...");
             }
             None => {
                 let new_node = Rc::new(RefCell::new(Node {
@@ -64,8 +67,8 @@ impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
 
                 self.head = Some(new_node.clone());
 
-                if self.map.len() > self.capacity {
-                    if let Some(tail) = &self.tail {
+                if self.map.len() >= self.capacity {
+                    if let Some(tail) = self.tail.clone() {
                         let prev = tail.borrow().prev.clone();
                         match prev {
                             Some(ref prev) => prev.borrow_mut().next = None,
