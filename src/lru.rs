@@ -4,16 +4,16 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-type Link<K, V> = Option<Rc<RefCell<Node<K, V>>>>;
+pub type Link<K, V> = Option<Rc<RefCell<Node<K, V>>>>;
 
-struct Node<K, V> {
+pub struct Node<K, V> {
     key: K,
     value: V,
     prev: Link<K, V>,
     next: Link<K, V>,
 }
 
-struct LRUCache<K, V> {
+pub struct LRUCache<K, V> {
     map: HashMap<K, Link<K, V>>,
     head: Link<K, V>,
     tail: Link<K, V>,
@@ -21,7 +21,7 @@ struct LRUCache<K, V> {
 }
 
 impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
-    fn new(capacity: usize) -> LRUCache<K, V> {
+    pub fn new(capacity: usize) -> LRUCache<K, V> {
         LRUCache {
             map: HashMap::new(),
             head: None,
@@ -30,11 +30,19 @@ impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
         }
     }
 
-    fn get(&mut self, _key: K) {
+    pub fn get(&mut self, key: K) -> Option<V> {
         // TODO: return the value if exists in cache, and update the position of the key in DLL
+        match self.map.get(&key) {
+            Some(node) => {
+                let value = node.clone().unwrap().borrow().value.clone();
+                self.move_to_head(node.clone()?);
+                Some(value)
+            },
+            None => None,
+        }
     }
 
-    fn put(&mut self, key: K, value: V) {
+    pub fn put(&mut self, key: K, value: V) {
         // TODO: add tests
         let node = match self.map.get_mut(&key).unwrap() {
             Some(node) => {
