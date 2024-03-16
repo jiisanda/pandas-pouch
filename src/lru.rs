@@ -3,27 +3,32 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::time::{Duration, Instant};
 
 pub type Link<K, V> = Option<Rc<RefCell<Node<K, V>>>>;
 
 pub struct Node<K, V> {
     key: K,
     value: V,
+    expires_at: Instant,
     prev: Link<K, V>,
     next: Link<K, V>,
 }
 
 pub struct LRUCache<K, V> {
     map: HashMap<K, Link<K, V>>,
+    expires: Duration,
     head: Link<K, V>,
     tail: Link<K, V>,
     capacity: usize,
 }
 
 impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
-    pub fn new(capacity: usize) -> LRUCache<K, V> {
+    pub fn new(capacity: usize, expires: Option<Duration>) -> LRUCache<K, V> {
+        let expires = expires.unwrap_or(Duration::from_secs(3600)); // default of duration is 3600 seconds (1 hour)
         LRUCache {
             map: HashMap::new(),
+            expires,
             head: None,
             tail: None,
             capacity,
@@ -32,11 +37,16 @@ impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
 
     pub fn get(&mut self, key: K) -> Option<V> {
         match self.map.get(&key) {
-            Some(node) => {
-                let value = node.clone().unwrap().borrow().value.clone();
-                self.move_to_head(node.clone()?);
-                Some(value)
-            },
+            Some(node_link) => {
+                if node_link.clone()?.borrow().expires_at < Instant::now() {
+                    self.map.remove(&key);
+                    None
+                } else {
+                    let value = node_link.clone().unwrap().borrow().value.clone();
+                    self.move_to_head(node_link.clone()?);
+                    Some(value)
+                }
+            }
             None => None,
         }
     }
@@ -54,6 +64,7 @@ impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
                 let new_node = Rc::new(RefCell::new(Node {
                     key: key.clone(),
                     value: value.clone(),
+                    expires_at: Instant::now() + self.expires,
                     prev: None,
                     next: self.head.clone(),
                 }));
