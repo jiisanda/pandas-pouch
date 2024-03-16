@@ -1,0 +1,1 @@
+alias pandas-pouch='cargo run'
