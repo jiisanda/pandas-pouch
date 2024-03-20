@@ -2,6 +2,7 @@
 
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::fmt::Display;
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
@@ -23,7 +24,7 @@ pub struct LRUCache<K, V> {
     capacity: usize,
 }
 
-impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
+impl<K: Eq + std::hash::Hash + Clone + Display, V: Clone + Display> LRUCache<K, V> {
     pub fn new(capacity: usize, expires: Option<Duration>) -> LRUCache<K, V> {
         let expires = expires.unwrap_or(Duration::from_secs(3600)); // default of duration is 3600 seconds (1 hour)
         LRUCache {
@@ -103,6 +104,20 @@ impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
 
         // finally the node is moved to head
         self.move_to_head(node);
+    }
+
+    pub fn print(&mut self) {
+        let mut current = self.head.clone();
+        while let Some(node) = current {
+            let key = node.borrow().key.clone();
+            if node.borrow().expires_at < Instant::now() {
+                // self.map.remove(&key);
+                self.remove(key);
+            } else {
+                println!("{}: {}", key, node.borrow().value);
+            }
+            current = node.borrow().next.clone();
+        }
     }
 
     fn remove(&mut self, key: K) {
