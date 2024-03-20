@@ -106,18 +106,20 @@ impl<K: Eq + std::hash::Hash + Clone + Display, V: Clone + Display> LRUCache<K, 
         self.move_to_head(node);
     }
 
-    pub fn print(&mut self) {
+    pub fn print(&mut self) -> Vec<(K, V)> {
         let mut current = self.head.clone();
+        let mut get_all = Vec::new();
         while let Some(node) = current {
             let key = node.borrow().key.clone();
             if node.borrow().expires_at < Instant::now() {
                 // self.map.remove(&key);
                 self.remove(key);
             } else {
-                println!("{}: {}", key, node.borrow().value);
+                get_all.push((key, node.borrow().value.clone()));
             }
             current = node.borrow().next.clone();
         }
+        get_all
     }
 
     fn remove(&mut self, key: K) {
@@ -130,7 +132,7 @@ impl<K: Eq + std::hash::Hash + Clone + Display, V: Clone + Display> LRUCache<K, 
                     // node is head of LRUCache DLL, update the head
                     self.head = node_ref.borrow().next.clone();
                 }
-                
+
                 if let Some(next_node_ref) = &node_ref.borrow().next {
                     next_node_ref.borrow_mut().prev = node_ref.borrow().prev.clone();
                 } else {
