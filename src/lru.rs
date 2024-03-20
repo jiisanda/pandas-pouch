@@ -122,31 +122,7 @@ impl<K: Eq + std::hash::Hash + Clone + Display, V: Clone + Display> LRUCache<K, 
         get_all
     }
 
-    fn remove(&mut self, key: K) {
-        if let Some(node_link) = self.map.get(&key) {
-            if let Some(node_ref) = node_link.clone() {
-                // removing node form DLL
-                if let Some(prev_node_ref) = &node_ref.borrow().prev {
-                    prev_node_ref.borrow_mut().next = node_ref.borrow().next.clone();
-                } else {
-                    // node is head of LRUCache DLL, update the head
-                    self.head = node_ref.borrow().next.clone();
-                }
-
-                if let Some(next_node_ref) = &node_ref.borrow().next {
-                    next_node_ref.borrow_mut().prev = node_ref.borrow().prev.clone();
-                } else {
-                    // node in tail, update the tail
-                    self.tail = node_ref.borrow().prev.clone();
-                }
-
-                // remove the node from the map
-                self.map.remove(&key);
-            }
-        }
-    }
-
-    fn move_to_head(&mut self, node_ref: Rc<RefCell<Node<K, V>>>) {
+    fn detach_node(&mut self, node_ref: Rc<RefCell<Node<K, V>>>) {
         if let Some(prev_node_ref) = &node_ref.borrow().prev {
             prev_node_ref.borrow_mut().next = node_ref.borrow().next.clone();
         } else {
@@ -157,9 +133,27 @@ impl<K: Eq + std::hash::Hash + Clone + Display, V: Clone + Display> LRUCache<K, 
         if let Some(next_node_ref) = &node_ref.borrow().next {
             next_node_ref.borrow_mut().prev = node_ref.borrow().prev.clone();
         } else {
-            // node in tail, update tail
+            // node is in tail, update tail
             self.tail = node_ref.borrow().prev.clone();
         }
+    }
+
+    fn remove(&mut self, key: K) {
+        if let Some(node_link) = self.map.get(&key) {
+            if let Some(node_ref) = node_link.clone() {
+                // unlinking/detaching node from DLL
+                self.detach_node(node_ref.clone());
+
+                // remove the node from the map
+                self.map.remove(&key);
+            }
+        }
+    }
+
+    fn move_to_head(&mut self, node_ref: Rc<RefCell<Node<K, V>>>) {
+
+        // unlinking/detaching node from the DLL
+        self.detach_node(node_ref.clone());
 
         // inserting at head
         if let Some(head_ref) = &self.head {

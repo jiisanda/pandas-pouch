@@ -21,6 +21,7 @@ fn main() {
 
     println!("1: {:?}", cache.get(1));
 
+    cache.put(1, "i");
     cache.put(3, "c");
     println!("1: {:?}", cache.get(1));
     println!("2: {:?}", cache.get(2));
@@ -30,4 +31,7 @@ fn main() {
     println!("2: {:?}", cache.get(2));
     println!("3: {:?}", cache.get(3));
     println!("4: {:?}", cache.get(4));
+    
+    println!("Printing...");
+    println!("{:?}", cache.print());
 }
