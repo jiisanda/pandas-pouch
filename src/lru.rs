@@ -39,7 +39,8 @@ impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
         match self.map.get(&key) {
             Some(node_link) => {
                 if node_link.clone()?.borrow().expires_at < Instant::now() {
-                    self.map.remove(&key);
+                    // self.map.remove(&key);
+                    self.remove(key);
                     None
                 } else {
                     let value = node_link.clone().unwrap().borrow().value.clone();
@@ -54,13 +55,16 @@ impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
     pub fn put(&mut self, key: K, value: V) {
         let node = match self.map.get_mut(&key) {
             Some(Some(node)) => {
+                // if key exists, update the value
                 node.borrow_mut().value = value.clone();
                 node.clone()
             }
             Some(None) => {
+                // if the key is present, but no value is associated with it (should not happen in well-behaved LRU)
                 panic!("Logic error: Node is None for existing key...");
             }
             None => {
+                // if key does not exist, create a new node
                 let new_node = Rc::new(RefCell::new(Node {
                     key: key.clone(),
                     value: value.clone(),
@@ -76,6 +80,7 @@ impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
 
                 self.head = Some(new_node.clone());
 
+                // if capacity is reached, remove the tail
                 if self.map.len() >= self.capacity {
                     if let Some(tail) = self.tail.clone() {
                         let prev = tail.borrow().prev.clone();
@@ -83,18 +88,45 @@ impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
                             Some(ref prev) => prev.borrow_mut().next = None,
                             None => self.head = None,
                         }
+                        // remove the tail(key) from map
                         let key_to_remove = tail.borrow().key.clone();
                         self.map.remove(&key_to_remove);
                         self.tail = prev;
                     }
                 }
 
+                // insert the new node into map
                 self.map.insert(key.clone(), Some(new_node.clone()));
                 new_node
             }
         };
 
+        // finally the node is moved to head
         self.move_to_head(node);
+    }
+
+    fn remove(&mut self, key: K) {
+        if let Some(node_link) = self.map.get(&key) {
+            if let Some(node_ref) = node_link.clone() {
+                // removing node form DLL
+                if let Some(prev_node_ref) = &node_ref.borrow().prev {
+                    prev_node_ref.borrow_mut().next = node_ref.borrow().next.clone();
+                } else {
+                    // node is head of LRUCache DLL, update the head
+                    self.head = node_ref.borrow().next.clone();
+                }
+                
+                if let Some(next_node_ref) = &node_ref.borrow().next {
+                    next_node_ref.borrow_mut().prev = node_ref.borrow().prev.clone();
+                } else {
+                    // node in tail, update the tail
+                    self.tail = node_ref.borrow().prev.clone();
+                }
+
+                // remove the node from the map
+                self.map.remove(&key);
+            }
+        }
     }
 
     fn move_to_head(&mut self, node_ref: Rc<RefCell<Node<K, V>>>) {
