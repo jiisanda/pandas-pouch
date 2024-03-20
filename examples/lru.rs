@@ -11,10 +11,14 @@ fn main() {
     println!("1: {:?}", cache.get(1));
     cache.put(2, "b");
     println!("2: {:?}", cache.get(2));
+    
+    println!("Printing...");
+    cache.print();
 
     println!("Sleeping for 5 secs...");
     thread::sleep(Duration::from_secs(5));
     println!("Woke up!");
+
     println!("1: {:?}", cache.get(1));
 
     cache.put(3, "c");
