@@ -1,2 +1,2 @@
+pub mod client;
 pub mod lru;
-mod client;

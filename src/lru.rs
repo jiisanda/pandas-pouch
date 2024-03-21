@@ -138,20 +138,19 @@ impl<K: Eq + std::hash::Hash + Clone + Display, V: Clone + Display> LRUCache<K, 
         }
     }
 
-    fn remove(&mut self, key: K) -> Option<(K, V)>{
+    fn remove(&mut self, key: K) -> Option<(K, V)> {
         if let Some(node_link) = self.map.remove(&key) {
             if let Some(node_ref) = node_link.clone() {
                 // unlinking/detaching node from DLL
                 self.detach_node(node_ref.clone());
                 let node = node_ref.borrow();
-                return Some((node.key.clone(), node.value.clone()))
+                return Some((node.key.clone(), node.value.clone()));
             }
         }
         None
     }
 
     fn move_to_head(&mut self, node_ref: Rc<RefCell<Node<K, V>>>) {
-
         // unlinking/detaching node from the DLL
         self.detach_node(node_ref.clone());
 
