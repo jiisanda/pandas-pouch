@@ -42,7 +42,7 @@ impl<K: Eq + std::hash::Hash + Clone + Display, V: Clone + Display> LRUCache<K, 
                 if node_ref.borrow().expires_at < Instant::now() {
                     // self.map.remove(&key)
                     self.remove(key);
-                    return None
+                    return None;
                 }
                 let value = node_ref.borrow().value.clone();
                 self.move_to_head(node_link.as_ref().unwrap().clone());
@@ -50,7 +50,7 @@ impl<K: Eq + std::hash::Hash + Clone + Display, V: Clone + Display> LRUCache<K, 
             } else {
                 None
             }
-        } else { 
+        } else {
             None
         }
     }
