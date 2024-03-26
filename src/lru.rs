@@ -37,19 +37,21 @@ impl<K: Eq + std::hash::Hash + Clone + Display, V: Clone + Display> LRUCache<K, 
     }
 
     pub fn get(&mut self, key: K) -> Option<V> {
-        match self.map.get(&key) {
-            Some(node_link) => {
-                if node_link.clone()?.borrow().expires_at < Instant::now() {
-                    // self.map.remove(&key);
+        if let Some(node_link) = self.map.get(&key) {
+            if let Some(node_ref) = node_link.as_ref() {
+                if node_ref.borrow().expires_at < Instant::now() {
+                    // self.map.remove(&key)
                     self.remove(key);
-                    None
-                } else {
-                    let value = node_link.clone().unwrap().borrow().value.clone();
-                    self.move_to_head(node_link.clone()?);
-                    Some(value)
+                    return None
                 }
+                let value = node_ref.borrow().value.clone();
+                self.move_to_head(node_link.as_ref().unwrap().clone());
+                Some(value)
+            } else {
+                None
             }
-            None => None,
+        } else { 
+            None
         }
     }
 
