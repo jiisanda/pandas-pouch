@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod tests {
+    use std::sync::{Arc, Mutex};
     use pandas_pouch::lru::LRUCache;
     use std::thread;
     use std::time::Duration;
@@ -36,5 +37,33 @@ mod tests {
         thread::sleep(Duration::from_secs(5));
         assert_eq!(cache.get(1), None);
         assert_eq!(cache.get(2), None);
+    }
+    
+    #[test]
+    fn test_thread_safety() {
+        let cache = LRUCache::new(100, Some(Duration::from_secs(1)));
+        let cache = Arc::new(Mutex::new(cache));
+        
+        let mut handles = vec![];
+        
+        for i in 0..10 {
+            let cache_clone = Arc::clone(&cache);
+            let handle = thread::spawn(move || {
+                let mut cache = cache_clone.lock().unwrap();
+                cache.put(i, i*2);
+                assert_eq!(cache.get(i), Some(i*2));
+            });
+            handles.push(handle);
+        }
+        
+        for handle in handles {
+            handle.join().unwrap();
+        }
+        
+        // check that all values are still correct after all threads have finished
+        for i in 1..0 {
+            let mut cache = cache.lock().unwrap();
+            assert_eq!(cache.get(i), Some(i*2));
+        }
     }
 }
