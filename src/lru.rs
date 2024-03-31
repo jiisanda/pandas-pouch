@@ -42,10 +42,12 @@ impl<K: Eq + std::hash::Hash + Clone + Display, V: Clone + Display> LRUCache<K, 
             if let Some(node_ref) = node_link {
                 let node = node_ref.lock().unwrap();
                 if node.expires_at < Instant::now() {
+                    drop(node);
                     self.remove(key);
                     return None;
                 }
                 let value = node.value.clone();
+                drop(node);
                 self.move_to_head(node_ref.clone()); // Clone node_ref
                 Some(value)
             } else {
